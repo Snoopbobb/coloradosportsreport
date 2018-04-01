@@ -1,38 +1,4 @@
-# -----------------------------------------------------------------
 # .gitignore for WordPress
-# Bare Minimum Git
-# http://ironco.de/bare-minimum-git/
-# ver 20150227
-#
-<<<<<<< HEAD
-# This file is tailored for a WordPress project
-=======
-# This file is tailored for a WordPress project
->>>>>>> 7467cceeae461bba4393b25260d63db478d33736
-# using the default directory structure
-#
-# This file specifies intentionally untracked files to ignore
-# http://git-scm.com/docs/gitignore
-#
-# NOTES:
-# The purpose of gitignore files is to ensure that certain files not
-# tracked by Git remain untracked.
-#
-# To ignore uncommitted changes in a file that is already tracked,
-# use `git update-index --assume-unchanged`.
-#
-# To stop tracking a file that is currently tracked,
-# use `git rm --cached`
-#
-# Change Log:
-# 20150227 Ignore hello.php plugin. props @damienfa
-# 20150227 Change theme ignore to wildcard twenty*. props @Z33
-# 20140606 Add .editorconfig as a tracked file
-# 20140404 Ignore database, compiled, and packaged files
-# 20140404 Header Information Updated
-# 20140402 Initially Published
-#
-# -----------------------------------------------------------------
 
 # ignore everything in the root except the "wp-content" directory.
 /*
@@ -61,6 +27,7 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 *.komodoproject
+*.vscode
 
 # ignore log files and databases
 *.log
@@ -95,13 +62,7 @@ wp-content/*
 !wp-content/themes/
 
 # ignore these plugins
-wp-content/plugins/adsense-box/
-wp-content/plugins/facebook-auto-publish/
-wp-content/plugins/google-analytics-dashboard-for-wp/
-wp-content/plugins/twitter-auto-publish/
-wp-content/plugins/wordpress-seo/
-#wp-content/plugins/wp-rss-aggregator/
-
+wp-content/plugins/*
 
 # ignore specific themes
 wp-content/themes/twentyfourteen/
