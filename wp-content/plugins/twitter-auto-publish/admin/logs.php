@@ -1,4 +1,5 @@
 <?php 
+if( !defined('ABSPATH') ){ exit();}
 ?>
 <div >
 
@@ -24,19 +25,19 @@
 					<?php 
 					$post_tw_logsmain = get_option('xyz_twap_post_logs' );
 					$post_tw_logsmain_array = array();
-					foreach ($post_tw_logsmain as $logkey => $logval)
-					{
-						$post_tw_logsmain_array[]=$logval;
-					}
-					
 					if($post_tw_logsmain=='')
 					{
 						?>
 						<tr><td colspan="4" style="padding: 5px;">No logs Found</td></tr>
 						<?php
 					}
+					else{
+					foreach ($post_tw_logsmain as $logkey => $logval)
+					{
+						$post_tw_logsmain_array[]=$logval;
+					}}
 					
-					if(is_array($post_tw_logsmain_array))
+					if(count($post_tw_logsmain_array)>0)
 					{
 						for($i=4;$i>=0;$i--)
 						{
@@ -53,14 +54,14 @@
 								<tr>	
 									<td>&nbsp;</td>
 									<td  style="vertical-align: middle !important;">
-									<?php echo $postid;	?>
+									<?php echo esc_html($postid);	?>
 									</td>
 									<td  style="vertical-align: middle !important;">
 									<?php echo get_the_title($postid);	?>
 									</td>
 									
 									<td style="vertical-align: middle !important;">
-									<?php echo $publishtime;?>
+									<?php echo esc_html($publishtime);?>
 									</td>
 									
 									<td style="vertical-align: middle !important;">
@@ -74,8 +75,8 @@
 									else
 									{
 										$arrval=unserialize($status);
-										foreach ($arrval as $a=>$b)
-										echo "<span style=\"color:red\">".$a." : ".$b."</span><br>";
+										//foreach ($arrval as $a=>$b)
+										echo $arrval;
 									}
 									?>
 									</td>

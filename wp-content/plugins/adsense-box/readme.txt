@@ -5,8 +5,8 @@ License URI: http://www.gnu.org/licenses/gpl.html
 Donate link: http://photoboxone.com/donate/
 Tags: adsense, google adsense, google, google code, adsense code, widget, widgets, image, images, photo, photos, plugin, plugins, picture, pictures, media, responsive, post, posts, page, pages, ads, ads box, scripts, code
 Requires at least: 3.5
-Tested up to: 4.5.2
-Stable tag: 1.0.5
+Tested up to: 4.7
+Stable tag: 1.0.8
 
 
 Adsense Box is an plugin show Google Adsense code in widget ...
@@ -40,6 +40,18 @@ If any problem occurs, please read [documents wordpress](http://photoboxone.com/
 Example [Adsense Box](http://demo.photoboxone.com/adsense-box/)
 
 == Changelog ==
+
+= 1.0.9 =
+* Fix core.
+
+= 1.0.8 =
+* Update core.
+
+= 1.0.7 =
+* Update core.
+
+= 1.0.6 =
+* Fix error.
 
 = 1.0.5 =
 * Fix error.

@@ -1,4 +1,5 @@
 <?php 
+if( !defined('ABSPATH') ){ exit();}
 add_action( 'add_meta_boxes', 'xyz_twap_add_custom_box' );
 $GLOBALS['edit_flag']=0;
 function xyz_twap_add_custom_box()
@@ -10,9 +11,9 @@ function xyz_twap_add_custom_box()
 	if($posttype=="")
 		$posttype="post";
 	
-if(isset($_GET['action']) && $_GET['action']=="edit")
+if(isset($_GET['action']) && $_GET['action']=="edit" && !empty($_GET['post'])) /// empty check added for fixing client scenario
 	{
-		$postid=$_GET['post'];
+		$postid=intval($_GET['post']);
 		
 		
 		$get_post_meta=get_post_meta($postid,"xyz_twap",true);
@@ -21,7 +22,7 @@ if(isset($_GET['action']) && $_GET['action']=="edit")
 		}
 		global $wpdb;
 		$table='posts';
-		$accountCount = $wpdb->query( 'SELECT * FROM '.$wpdb->prefix.$table.' WHERE id="'.$postid.'" and post_status!="draft" LIMIT 0,1' ) ;
+		$accountCount = $wpdb->query($wpdb->prepare( 'SELECT * FROM '.$wpdb->prefix.$table.' WHERE id=%d and post_status!=%s LIMIT %d,%d',array($postid,'draft',0,1) )) ;
 		if($accountCount>0){
 			$GLOBALS['edit_flag']=1;
 			}
@@ -37,7 +38,7 @@ if(isset($_GET['action']) && $_GET['action']=="edit")
 			return;
 	}
 	else if($posttype=="post")
-	{
+	{ 
 		$xyz_twap_include_posts=get_option('xyz_twap_include_posts');
 		if($xyz_twap_include_posts==0)
 			return;
@@ -225,7 +226,9 @@ function inArray(needle, haystack) {
 							- Insert the excerpt of your post.<br />{POST_CONTENT} - Insert
 							the description of your post.<br />{BLOG_TITLE} - Insert the name
 							of your blog.<br />{USER_NICENAME} - Insert the nicename
-							of the author.
+							of the author.<br />{POST_ID} - Insert the ID of your post.
+							<br />{POST_PUBLISH_DATE} - Insert the publish date of your post.
+							<br />{USER_DISPLAY_NAME} - Insert the display name of the author.
 						</div>
 		</td>
 	<td>
@@ -237,6 +240,9 @@ function inArray(needle, haystack) {
 		<option value ="4">{POST_CONTENT}   </option>
 		<option value ="5">{BLOG_TITLE}   </option>
 		<option value ="6">{USER_NICENAME}   </option>
+		<option value ="7">{POST_ID}   </option>
+		<option value ="8">{POST_PUBLISH_DATE}   </option>
+		<option value ="9">{USER_DISPLAY_NAME}   </option>
 		</select> </td></tr>
 		
 		<tr id="twmftarea_twap"><td>&nbsp;</td><td>
@@ -259,7 +265,7 @@ function inArray(needle, haystack) {
 	function load_edit_action()
 	{
 		document.getElementById("xyz_twap_post").value=1;
-		var xyz_twap_default_selection_edit="<?php echo get_option('xyz_twap_default_selection_edit');?>";
+		var xyz_twap_default_selection_edit="<?php echo esc_html(get_option('xyz_twap_default_selection_edit'));?>";
 		if(xyz_twap_default_selection_edit=="")
 			xyz_twap_default_selection_edit=0;
 		if(xyz_twap_default_selection_edit==1)

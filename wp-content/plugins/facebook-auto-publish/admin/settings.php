@@ -1,10 +1,11 @@
 <?php
-
+if( !defined('ABSPATH') ){ exit();}
 global $current_user;
 $auth_varble=0;
 wp_get_current_user();
 $imgpath= plugins_url()."/facebook-auto-publish/admin/images/";
 $heimg=$imgpath."support.png";
+$ms0="";
 $ms1="";
 $ms2="";
 $ms3="";
@@ -37,6 +38,16 @@ Thanks again for using the plugin. We will never show the message again.
 $erf=0;
 if(isset($_POST['fb']))
 {
+	if (
+			! isset( $_REQUEST['_wpnonce'] )
+			|| ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'xyz_smap_fb_settings_form_nonce' )
+			) {
+	
+				wp_nonce_ays( 'xyz_smap_fb_settings_form_nonce' );
+	
+				exit();
+	
+			}
 
 	$ss=array();
 	if(isset($_POST['fbap_pages_list']))
@@ -62,18 +73,23 @@ if(isset($_POST['fb']))
 	update_option('xyz_fbap_pages_ids',$fbap_pages_list_ids);
 
 
-
 	$applidold=get_option('xyz_fbap_application_id');
 	$applsecretold=get_option('xyz_fbap_application_secret');
 	//$fbidold=get_option('xyz_fbap_fb_id');
 	
-	$posting_method=$_POST['xyz_fbap_po_method'];
-	$posting_permission=$_POST['xyz_fbap_post_permission'];
-	$appid=$_POST['xyz_fbap_application_id'];
-	$appsecret=$_POST['xyz_fbap_application_secret'];
+	$posting_method=intval($_POST['xyz_fbap_po_method']);
+	$posting_permission=intval($_POST['xyz_fbap_post_permission']);
+	$app_name=sanitize_text_field($_POST['xyz_fbap_application_name']);
+	$appid=sanitize_text_field($_POST['xyz_fbap_application_id']);
+	$appsecret=sanitize_text_field($_POST['xyz_fbap_application_secret']);
 	$messagetopost=$_POST['xyz_fbap_message'];
 	//$fbid=$_POST['xyz_fbap_fb_id'];
-	if($appid=="" && $posting_permission==1)
+	if($app_name=="" && $posting_permission==1)
+	{
+		$ms0="Please fill facebook application name.";
+		$erf=1;
+	}
+	else if($appid=="" && $posting_permission==1)
 	{
 		$ms1="Please fill facebook application id.";
 		$erf=1;
@@ -105,7 +121,7 @@ if(isset($_POST['fb']))
 		{
 			$messagetopost="New post added at {BLOG_TITLE} - {POST_TITLE}";
 		}
-
+		update_option('xyz_fbap_application_name',$app_name);
 		update_option('xyz_fbap_application_id',$appid);
 		update_option('xyz_fbap_post_permission',$posting_permission);
 		update_option('xyz_fbap_application_secret',$appsecret);
@@ -113,19 +129,7 @@ if(isset($_POST['fb']))
 		update_option('xyz_fbap_po_method',$posting_method);
 		update_option('xyz_fbap_message',$messagetopost);
 
-		$url = 'https://graph.facebook.com/'.XYZ_FBAP_FB_API_VERSION."/me";
-		$contentget=wp_remote_get($url);$page_id="";
-		if(is_array($contentget))
-		{
-			$result1=$contentget['body'];
-			$pagearray = json_decode($result1);
-			if(isset($pagearray->id))
-			$page_id=$pagearray->id;
-		}
-		
-			
 
-		update_option('xyz_fbap_fb_numericid',$page_id);
 
 	}
 }
@@ -167,7 +171,7 @@ if(isset($_POST['fb']) && $erf==1)
 	<?php 
 	if(isset($_POST['fb']))
 	{
-		echo $ms1;echo $ms2;echo $ms3;echo $ms4;
+		echo esc_html($ms0);echo esc_html($ms1);echo esc_html($ms2);echo esc_html($ms3);echo esc_html($ms4);
 	}
 	?>
 	&nbsp;&nbsp;&nbsp;<span id="system_notice_area_dismiss">Dismiss</span>
@@ -192,8 +196,8 @@ function dethide(id)
 	</h2>
 	<?php
 	$af=get_option('xyz_fbap_af');
-	$appid=esc_html(get_option('xyz_fbap_application_id'));
-	$appsecret=esc_html(get_option('xyz_fbap_application_secret'));
+	$appid=get_option('xyz_fbap_application_id');
+	$appsecret=get_option('xyz_fbap_application_secret');
 	//$fbid=esc_html(get_option('xyz_fbap_fb_id'));
 	$posting_method=get_option('xyz_fbap_po_method');
 	$posting_message=esc_textarea(get_option('xyz_fbap_message'));
@@ -202,7 +206,7 @@ function dethide(id)
 		?>
 	<span style="color: red;">Application needs authorisation</span> <br>
 	<form method="post">
-
+     <?php wp_nonce_field( 'xyz_smap_fb_auth_nonce' );?>
 		<input type="submit" class="submit_fbap_new" name="fb_auth"
 			value="Authorize" /><br><br>
 
@@ -212,7 +216,7 @@ function dethide(id)
 	{
 		?>
 	<form method="post">
-	
+	<?php wp_nonce_field( 'xyz_smap_fb_auth_nonce' );?>
 	<input type="submit" class="submit_fbap_new" name="fb_auth"
 	value="Reauthorize" title="Reauthorize the account" /><br><br>
 	
@@ -241,9 +245,10 @@ function dethide(id)
 
 		<b>Note :</b> You have to create a Facebook application before filling the following details.
 		<b><a href="https://developers.facebook.com/apps" target="_blank">Click here</a></b> to create new Facebook application. 
-		<br>In the application page in facebook, navigate to <b>Apps > Settings > Edit settings > Website > Site URL</b>. Set the site url as : 
+		<br>In the application page in facebook, navigate to <b>Apps >Add Product > Facebook Login >Quickstart >Web > Site URL</b>. Set the site url as : 
 		<span style="color: red;"><?php echo  (is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST']; ?></span>
-<br>For detailed step by step instructions <b><a href="http://docs.xyzscripts.com/wordpress-plugins/facebook-auto-publish/creating-facebook-application/" target="_blank">Click here</a></b>.
+		<br>And then navigate to <b>Apps > Facebook Login > Settings</b>. Set the Valid OAuth redirect URIs as :<br>
+		<span style="color: red;"><?php echo $redirecturl; ?></span><br>For detailed step by step instructions <b><a href="http://help.xyzscripts.com/docs/social-media-auto-publish/faq/how-can-i-create-facebook-application/" target="_blank">Click here</a></b>.
 	</div>
 
 	</td>
@@ -251,6 +256,8 @@ function dethide(id)
 	</table>
 	
 	<form method="post">
+	<?php wp_nonce_field( 'xyz_smap_fb_settings_form_nonce' );?>
+	
 		<input type="hidden" value="config">
 
 
@@ -259,13 +266,21 @@ function dethide(id)
 
 			<div style="font-weight: bold;padding: 3px;">All fields given below are mandatory</div> 
 			<table class="widefat xyz_fbap_widefat_table" style="width: 99%">
+			<tr valign="top">
+					<td width="50%">Application name
+					</td>
+					<td><input id="xyz_fbap_application_name"
+						name="xyz_fbap_application_name" type="text"
+						value="<?php if($ms0=="") {echo esc_html(get_option('xyz_fbap_application_name'));}?>" />
+						<a href="http://help.xyzscripts.com/docs/social-media-auto-publish/faq/how-can-i-create-facebook-application/" target="_blank">How can I create a Facebook Application?</a>
+					</td>
+				</tr>
 				<tr valign="top">
 					<td width="50%">Application id
 					</td>
 					<td><input id="xyz_fbap_application_id"
 						name="xyz_fbap_application_id" type="text"
 						value="<?php if($ms1=="") {echo esc_html(get_option('xyz_fbap_application_id'));}?>" />
-						<a href="http://docs.xyzscripts.com/wordpress-plugins/social-media-auto-publish/creating-facebook-application" target="_blank">How can I create a Facebook Application?</a>
 					</td>
 				</tr>
 
@@ -295,7 +310,9 @@ function dethide(id)
 							- Insert the excerpt of your post.<br />{POST_CONTENT} - Insert
 							the description of your post.<br />{BLOG_TITLE} - Insert the name
 							of your blog.<br />{USER_NICENAME} - Insert the nicename
-							of the author.
+							of the author.<br />{POST_ID} - Insert the ID of your post.
+							<br />{POST_PUBLISH_DATE} - Insert the publish date of your post.
+							<br />{USER_DISPLAY_NAME} - Insert the display name of the author.
 						</div></td>
 	<td>
 	<select name="xyz_fbap_info" id="xyz_fbap_info" onchange="xyz_fbap_info_insert(this)">
@@ -306,12 +323,14 @@ function dethide(id)
 		<option value ="4">{POST_CONTENT}   </option>
 		<option value ="5">{BLOG_TITLE}   </option>
 		<option value ="6">{USER_NICENAME}   </option>
+		<option value ="7">{POST_ID}   </option>
+		<option value ="8">{POST_PUBLISH_DATE}   </option>
+		<option value= "9">{USER_DISPLAY_NAME}</option>
 		</select> </td></tr><tr><td>&nbsp;</td><td>
 		<textarea id="xyz_fbap_message"  name="xyz_fbap_message" style="height:80px !important;" ><?php if($ms4==""){ 
 								echo esc_textarea(get_option('xyz_fbap_message'));}?></textarea>
 	</td></tr>
-				
-				
+	
 				
 				<tr valign="top">
 					<td>Posting method
@@ -362,7 +381,7 @@ function dethide(id)
 					do
 					{
 						$result1="";$pagearray1="";
-						$pp=wp_remote_get("https://graph.facebook.com/".XYZ_FBAP_FB_API_VERSION."/me/accounts?access_token=$xyz_acces_token&limit=$limit&offset=$offset");
+						$pp=wp_remote_get("https://graph.facebook.com/".XYZ_FBAP_FB_API_VERSION."/me/accounts?access_token=$xyz_acces_token&limit=$limit&offset=$offset",array('sslverify'=> (get_option('xyz_fbap_peer_verification')=='1') ? true : false));
 					
 						if(is_array($pp))
 						{
@@ -444,12 +463,21 @@ function dethide(id)
 
 	if(isset($_POST['bsettngs']))
 	{
+		if (! isset( $_REQUEST['_wpnonce'] )
+				|| ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'xyz_smap_basic_settings_form_nonce' )
+				) {
+		
+					wp_nonce_ays( 'xyz_smap_basic_settings_form_nonce' );
+		
+					exit();
+		
+				}
 
-		$xyz_fbap_include_pages=$_POST['xyz_fbap_include_pages'];
-		$xyz_fbap_include_posts=$_POST['xyz_fbap_include_posts'];
+		$xyz_fbap_include_pages=intval($_POST['xyz_fbap_include_pages']);
+		$xyz_fbap_include_posts=intval($_POST['xyz_fbap_include_posts']);
 		
 		if($_POST['xyz_fbap_cat_all']=="All")
-			$fbap_category_ids=$_POST['xyz_fbap_cat_all'];//redio btn name
+			$fbap_category_ids=$_POST['xyz_fbap_cat_all'];//radio btn name
 		else
 			$fbap_category_ids=$_POST['xyz_fbap_sel_cat'];//dropdown
 
@@ -458,10 +486,10 @@ function dethide(id)
         if(isset($_POST['post_types']))
 		$xyz_customtypes=$_POST['post_types'];
 
-        $xyz_fbap_peer_verification=$_POST['xyz_fbap_peer_verification'];
-        $xyz_fbap_premium_version_ads=$_POST['xyz_fbap_premium_version_ads'];
-        $xyz_fbap_default_selection_edit=$_POST['xyz_fbap_default_selection_edit'];
-	    $xyz_fbap_utf_decode_enable=$_POST['xyz_fbap_utf_decode_enable'];
+        $xyz_fbap_peer_verification=intval($_POST['xyz_fbap_peer_verification']);
+        $xyz_fbap_premium_version_ads=intval($_POST['xyz_fbap_premium_version_ads']);
+        $xyz_fbap_default_selection_edit=intval($_POST['xyz_fbap_default_selection_edit']);
+	    $xyz_fbap_utf_decode_enable=intval($_POST['xyz_fbap_utf_decode_enable']);
         
         //$xyz_fbap_future_to_publish=$_POST['xyz_fbap_future_to_publish'];
 		$fbap_customtype_ids="";
@@ -511,17 +539,17 @@ function dethide(id)
 	$xyz_fbap_include_categories=get_option('xyz_fbap_include_categories');
 	$xyz_fbap_include_customposttypes=get_option('xyz_fbap_include_customposttypes');
 	$xyz_fbap_apply_filters=get_option('xyz_fbap_apply_filters');
-	$xyz_fbap_peer_verification=esc_html(get_option('xyz_fbap_peer_verification'));
-	$xyz_fbap_premium_version_ads=esc_html(get_option('xyz_fbap_premium_version_ads'));
-	$xyz_fbap_default_selection_edit=esc_html(get_option('xyz_fbap_default_selection_edit'));
-	$xyz_fbap_utf_decode_enable=esc_html(get_option('xyz_fbap_utf_decode_enable'));
+	$xyz_fbap_peer_verification=get_option('xyz_fbap_peer_verification');
+	$xyz_fbap_premium_version_ads=get_option('xyz_fbap_premium_version_ads');
+	$xyz_fbap_default_selection_edit=get_option('xyz_fbap_default_selection_edit');
+	$xyz_fbap_utf_decode_enable=get_option('xyz_fbap_utf_decode_enable');
 
 	?>
 		<h2>Basic Settings</h2>
 
 
 		<form method="post">
-
+<?php wp_nonce_field( 'xyz_smap_basic_settings_form_nonce' );?>
 			<table class="widefat xyz_fbap_widefat_table" style="width: 99%">
 
 				<tr valign="top">
@@ -559,7 +587,7 @@ function dethide(id)
 					<td  colspan="1">Select post categories for auto publish
 					</td>
 					<td><input type="hidden"
-						value="<?php echo $xyz_fbap_include_categories;?>"
+						value="<?php echo esc_html($xyz_fbap_include_categories);?>"
 						name="xyz_fbap_sel_cat" id="xyz_fbap_sel_cat"> <input type="radio"
 						name="xyz_fbap_cat_all" id="xyz_fbap_cat_all" value="All"
 						onchange="rd_cat_chn(1,-1)"
@@ -768,10 +796,10 @@ function dethide(id)
 </div>		
 
 	<script type="text/javascript">
-	//drpdisplay();
-var catval='<?php echo $xyz_fbap_include_categories; ?>';
-var custtypeval='<?php echo $xyz_fbap_include_customposttypes; ?>';
-var get_opt_cats='<?php echo get_option('xyz_fbap_include_posts');?>';
+	//drpdisplay(); 
+var catval='<?php echo esc_html($xyz_fbap_include_categories); ?>';
+var custtypeval='<?php echo esc_html($xyz_fbap_include_customposttypes); ?>';
+var get_opt_cats='<?php echo esc_html(get_option('xyz_fbap_include_posts'));?>';
 jQuery(document).ready(function() {
 	  if(catval=="All")
 		  jQuery("#cat_dropdown_span").hide();
@@ -805,7 +833,7 @@ document.getElementById('xyz_fbap_sel_cat').value=sel_str;
 
 }
 
-var d1='<?php echo $xyz_fbap_include_categories;?>';
+var d1='<?php echo esc_html($xyz_fbap_include_categories);?>';
 splitText = d1.split(",");
 jQuery.each(splitText, function(k,v) {
 jQuery("#xyz_fbap_catlist").children("option[value="+v+"]").attr("selected","selected");

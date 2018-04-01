@@ -3,7 +3,7 @@
  Plugin Name: Twitter Auto Publish
 Plugin URI: http://xyzscripts.com/wordpress-plugins/twitter-auto-publish/
 Description:   Publish posts automatically from your blog to Twitter social media. You can publish your posts to Twitter as simple text message or as text message with image. The plugin supports filtering posts by post-types and categories.
-Version: 1.3.1
+Version: 1.3.4
 Author: xyzscripts.com
 Author URI: http://xyzscripts.com/
 License: GPLv2 or later
@@ -24,16 +24,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-
+if( !defined('ABSPATH') ){ exit();}
 if ( !function_exists( 'add_action' ) ) {
 	echo "Hi there!  I'm just a plugin, not much I can do when called directly.";
 	exit;
 }
-ob_start();
+//ob_start();
 //error_reporting(E_ALL);
 define('XYZ_TWAP_PLUGIN_FILE',__FILE__);
 global $wpdb;
-$wpdb->query('SET SQL_MODE=""');
+//$wpdb->query('SET SQL_MODE=""');
 
 require_once( dirname( __FILE__ ) . '/admin/install.php' );
 require_once( dirname( __FILE__ ) . '/xyz-functions.php' );

@@ -67,16 +67,24 @@
             array(
                 'general'   =>  array(
                     'limit-feed-items-by-age' => array(
-                        'label'     =>  __( 'Limit feed items by age', WPRSS_TEXT_DOMAIN ),
+                        'label'     =>  __( 'Limit feed items stored by age', WPRSS_TEXT_DOMAIN ),
                         'callback'  =>  'wprss_setting_limit_feed_items_age_callback'
+                    ),
+                    'limit-feed-items-imported' => array(
+                        'label'     => __( 'Limit feed items stored per feed', WPRSS_TEXT_DOMAIN ),
+                        'callback'  => 'wprss_setting_limit_feed_items_imported_callback'
                     ),
                     'limit-feed-items-db' => array(
                         'label'     => __( 'Limit feed items stored', WPRSS_TEXT_DOMAIN ),
                         'callback'  => 'wprss_setting_limit_feed_items_callback'
                     ),
-                    'limit-feed-items-imported' => array(
-                        'label'     => __( 'Limit feed items per feed', WPRSS_TEXT_DOMAIN ),
-                        'callback'  => 'wprss_setting_limit_feed_items_imported_callback'
+                    'limit_feed_items_per_import' => array(
+                        'label'     => __( 'Limit feed items per import', WPRSS_TEXT_DOMAIN ),
+                        'callback'  => 'wprss_setting_limit_feed_items_per_import_callback'
+                    ),
+                    'feed_items_import_order' => array(
+                        'label'     => __( 'Import order', WPRSS_TEXT_DOMAIN ),
+                        'callback'  => 'wprss_setting_feed_items_import_order_callback'
                     ),
                     'cron-interval' => array(
                         'label'     =>  __( 'Feed processing interval', WPRSS_TEXT_DOMAIN ),
@@ -624,6 +632,55 @@
 		<?php echo wprss_settings_inline_help( $field['field_id'], $field['tooltip'] );
     }
 
+    /**
+     * Renders a <select> HTML tag from its parameters.
+     *
+     * @since 4.10
+     * @return string The HTML of a <select> tag.
+     */
+    function wprss_settings_render_select($id, $name, $items, $selected = null, $attributes = array())
+    {
+        ob_start();
+        $attributes = array_merge($attributes, array(
+            'id'            => $id,
+            'name'          => $name,
+        ));
+
+        $attributePairs = $attributes;
+        array_walk($attributePairs, function(&$v, $k) { $v = sprintf('%1$s="%2$s"', $k, $v); });
+        $attributesString = implode(' ', $attributePairs);
+        ?>
+        <select <?php echo $attributesString ?>>
+		<?php
+        foreach( $items as $_key => $_item ) {
+            $_key = (string) $_key;
+            $_item = (string) $_item;
+            $isSelected = $selected == $_key;
+            ?><option value="<?php echo $_key ?>"<?php if ($isSelected): ?> selected="selected"<?php endif ?>><?php echo htmlspecialchars($_item) ?></option><?php
+        }
+        ?>
+        </select>
+        <?php
+        $html = ob_get_clean();
+        return $html;
+    }
+
+    /**
+     * Gets options that should go in a dropdown which represents a
+     * feed-source-specific boolean setting.
+     *
+     * @since 4.10
+     * @return array An array with options.
+     */
+    function wprss_settings_get_feed_source_boolean_options()
+    {
+        return array(
+            1           => __('On', WPRSS_TEXT_DOMAIN),
+            0           => __('Off', WPRSS_TEXT_DOMAIN),
+            -1          => __('Default', WPRSS_TEXT_DOMAIN),
+        );
+    }
+
 
     /** 
      * Set text preceding source
@@ -841,6 +898,56 @@
         ?>
 		<input id="<?php echo $field['field_id'] ?>" name="wprss_settings_general[styles_disable]" type="checkbox" value="1" <?php echo checked( 1, $styles_disable, false ) ?> />
 		<?php echo wprss_settings_inline_help( $field['field_id'], $field['tooltip'] );
+    }
+
+    /**
+     * Renders the `limit_feed_items_per_import` setting.
+     *
+     * @since 4.11.2
+     *
+     * @param array $field Field data.
+     */
+    function wprss_setting_limit_feed_items_per_import_callback($field)
+    {
+        $id = $field['field_id'];
+        $mainOptionName = 'wprss_settings_general';
+        $value = wprss_get_general_setting($id);
+        echo \Aventura\Wprss\Core\Model\SettingsAbstract::getTextHtml($value, array(
+            'id'                => $id,
+            'name'              => \Aventura\Wprss\Core\Model\SettingsAbstract::getNameHtml(array($mainOptionName, $id)),
+            'placeholder'       => __( 'No Limit', WPRSS_TEXT_DOMAIN )
+        ));
+        ?>
+        <?php echo wprss_settings_inline_help( $field['field_id'], $field['tooltip'] );
+    }
+
+    /**
+     * Renders the `feed_items_import_order` setting.
+     *
+     * @since 4.11.2
+     *
+     * @param array $field Field data.
+     */
+    function wprss_setting_feed_items_import_order_callback($field)
+    {
+        $id = $field['field_id'];
+        $mainOptionName = 'wprss_settings_general';
+        $value = wprss_get_general_setting($id);
+        $items = array(
+            ''                     => __('Any', WPRSS_TEXT_DOMAIN),
+            'latest'               => __('Latest First', WPRSS_TEXT_DOMAIN),
+            'oldest'               => __('Oldest First', WPRSS_TEXT_DOMAIN),
+        );
+        ?>
+		<select id="<?php echo $id ?>" name="<?php echo \Aventura\Wprss\Core\Model\SettingsAbstract::getNameHtml(array($mainOptionName, $id)) ?>">
+		<?php
+        foreach( $items as $_value => $_label ): ?>
+            <option value="<?php echo esc_attr($_value) ?>" <?php selected( $value, $_value ) ?> >
+                <?php echo esc_html($_label) ?>
+            </option>
+        <?php endforeach ?>
+        </select>
+        <?php echo wprss_settings_inline_help( $field['field_id'], $field['tooltip'] );
     }
 
 

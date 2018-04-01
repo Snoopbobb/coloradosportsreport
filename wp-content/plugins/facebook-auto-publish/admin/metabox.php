@@ -1,4 +1,5 @@
 <?php 
+if( !defined('ABSPATH') ){ exit();}
 add_action( 'add_meta_boxes', 'xyz_fbap_add_custom_box' );
 $GLOBALS['edit_flag']=0;
 function xyz_fbap_add_custom_box()
@@ -10,25 +11,21 @@ function xyz_fbap_add_custom_box()
 	if($posttype=="")
 		$posttype="post";
 	
-if(isset($_GET['action']) && $_GET['action']=="edit")
+if(isset($_GET['action']) && $_GET['action']=="edit" && !empty($_GET['post']))   /// empty check added for fixing client scenario
 	{
-		$postid=$_GET['post'];
-		
-		
+		$postid=intval($_GET['post']);
 		$get_post_meta=get_post_meta($postid,"xyz_fbap",true);
 		if($get_post_meta==1){
 			$GLOBALS['edit_flag']=1;
 		}
 		global $wpdb;
 		$table='posts';
-		$accountCount = $wpdb->query( 'SELECT * FROM '.$wpdb->prefix.$table.' WHERE id="'.$postid.'" and post_status!="draft" LIMIT 0,1' ) ;
+		$accountCount = $wpdb->query($wpdb->prepare( 'SELECT * FROM '.$wpdb->prefix.$table.' WHERE id=%d and post_status!=%s LIMIT %d,%d',array($postid,'draft',0,1) )) ;
 		if($accountCount>0){
 			$GLOBALS['edit_flag']=1;
 			}
 		$posttype=get_post_type($postid);
 	}
-
-
 	if ($posttype=="page")
 	{
 
@@ -44,11 +41,8 @@ if(isset($_GET['action']) && $_GET['action']=="edit")
 	}
 	else if($posttype!="post")
 	{
-
 		$xyz_fbap_include_customposttypes=get_option('xyz_fbap_include_customposttypes');
-
-
-		$carr=explode(',', $xyz_fbap_include_customposttypes);
+     	$carr=explode(',', $xyz_fbap_include_customposttypes);
 		if(!in_array($posttype,$carr))
 			return;
 
@@ -238,7 +232,9 @@ function inArray(needle, haystack) {
 							- Insert the excerpt of your post.<br />{POST_CONTENT} - Insert
 							the description of your post.<br />{BLOG_TITLE} - Insert the name
 							of your blog.<br />{USER_NICENAME} - Insert the nicename
-							of the author.
+							of the author.<br />{POST_ID} - Insert the ID of your post.
+							<br />{POST_PUBLISH_DATE} - Insert the publish date of your post.
+							<br />{USER_DISPLAY_NAME} - Insert the display name of the author.
 						</div>
 		</td>
 	<td>
@@ -250,6 +246,9 @@ function inArray(needle, haystack) {
 		<option value ="4">{POST_CONTENT}   </option>
 		<option value ="5">{BLOG_TITLE}   </option>
 		<option value ="6">{USER_NICENAME}   </option>
+		<option value ="7">{POST_ID}   </option>
+		<option value ="8">{POST_PUBLISH_DATE}   </option>
+		<option value= "9">{USER_DISPLAY_NAME}</option>
 		</select> </td></tr>
 		
 		<tr id="fpabpmftarea"><td>&nbsp;</td><td>
@@ -272,7 +271,7 @@ function inArray(needle, haystack) {
 	function load_edit_action()
 	{
 		document.getElementById("xyz_fbap_post").value=1;
-		var xyz_fbap_default_selection_edit="<?php echo get_option('xyz_fbap_default_selection_edit');?>";
+		var xyz_fbap_default_selection_edit="<?php echo esc_html(get_option('xyz_fbap_default_selection_edit'));?>";
 		if(xyz_fbap_default_selection_edit=="")
 			xyz_fbap_default_selection_edit=0;
 		if(xyz_fbap_default_selection_edit==1)
@@ -286,8 +285,6 @@ function inArray(needle, haystack) {
 					document.getElementById("fpabpmftarea").style.display='none';
 				}
 	}
-	
-	
 	function xyz_fbap_info_insert(inf){
 		
 	    var e = document.getElementById("xyz_fbap_info");

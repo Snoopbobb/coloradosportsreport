@@ -1,5 +1,5 @@
 <?php
-
+if( !defined('ABSPATH') ){ exit();}
 global $current_user;
 $auth_varble=0;
 wp_get_current_user();
@@ -38,15 +38,23 @@ $tms6="";
 $terf=0;
 if(isset($_POST['twit']))
 {
-
-	$tappid=$_POST['xyz_twap_twconsumer_id'];
-	$tappsecret=$_POST['xyz_twap_twconsumer_secret'];
-	$twid=$_POST['xyz_twap_tw_id'];
-	$taccess_token=$_POST['xyz_twap_current_twappln_token'];
-	$taccess_token_secret=$_POST['xyz_twap_twaccestok_secret'];
-	$tposting_permission=$_POST['xyz_twap_twpost_permission'];
-	$tposting_image_permission=$_POST['xyz_twap_twpost_image_permission'];
+	if (! isset( $_REQUEST['_wpnonce'] )|| ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'xyz_smap_tw_settings_form_nonce' ))
+	{
+		wp_nonce_ays( 'xyz_smap_tw_settings_form_nonce' );
+		exit();
+	}
+	$tappid=sanitize_text_field($_POST['xyz_twap_twconsumer_id']);
+	$tappsecret=sanitize_text_field($_POST['xyz_twap_twconsumer_secret']);
+	$twid=sanitize_text_field($_POST['xyz_twap_tw_id']);
+	$taccess_token=sanitize_text_field($_POST['xyz_twap_current_twappln_token']);
+	$taccess_token_secret=sanitize_text_field($_POST['xyz_twap_twaccestok_secret']);
+	$tposting_permission=intval($_POST['xyz_twap_twpost_permission']);
+	$tposting_image_permission=intval($_POST['xyz_twap_twpost_image_permission']);
 	$tmessagetopost=$_POST['xyz_twap_twmessage'];
+	$xyz_twap_tw_char_limit=$_POST['xyz_twap_tw_char_limit'];
+	$xyz_twap_tw_char_limit=intval($xyz_twap_tw_char_limit);
+	if ($xyz_twap_tw_char_limit<140)
+		$xyz_twap_tw_char_limit=140;
 	if($tappid=="" && $tposting_permission==1)
 	{
 		$terf=1;
@@ -94,6 +102,7 @@ if(isset($_POST['twit']))
 		update_option('xyz_twap_twmessage',$tmessagetopost);
 		update_option('xyz_twap_twpost_permission',$tposting_permission);
 		update_option('xyz_twap_twpost_image_permission',$tposting_image_permission);
+		update_option('xyz_twap_tw_char_limit', $xyz_twap_tw_char_limit);
 		
 	}
 }
@@ -116,7 +125,7 @@ if(isset($_POST['twit']) && $terf==1)
 	<?php 
 	if(isset($_POST['twit']))
 	{
-		echo $tms1;echo $tms2;echo $tms3;echo $tms4;echo $tms5;echo $tms6;
+		echo esc_html($tms1);echo esc_html($tms2);echo esc_html($tms3);echo esc_html($tms4);echo esc_html($tms5);echo esc_html($tms6);
 	}
 	?>
 	&nbsp;&nbsp;&nbsp;<span id="system_notice_area_dismiss">Dismiss</span>
@@ -146,10 +155,10 @@ function dethide(id)
 <td id="bottomBorderNone">
 	<div>
 		<b>Note :</b> You have to create a Twitter application before filling in following fields. 	
-		<br><b><a href="https://dev.twitter.com/apps/new" target="_blank">Click here</a></b> to create new application. Specify the website for the application as :	<span style="color: red;"><?php echo  (is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST']; ?>		 </span> 
+		<br><b><a href="https://apps.twitter.com/app/new" target="_blank">Click here</a></b> to create new application. Specify the website for the application as :	<span style="color: red;"><?php echo  (is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST']; ?>		 </span> 
 		 <br>In the twitter application, navigate to	<b>Settings > Application Type > Access</b>. Select <b>Read and Write</b> option. 
 		 <br>After updating access, navigate to <b>Details > Your access token</b> in the application and	click <b>Create my access token</b> button.
-		<br>For detailed step by step instructions <b><a href="http://docs.xyzscripts.com/wordpress-plugins/twitter-auto-publish/creating-twitter-application/" target="_blank">Click here</a></b>.
+		<br>For detailed step by step instructions <b><a href="http://help.xyzscripts.com/docs/social-media-auto-publish/faq/how-can-i-create-twitter-application/" target="_blank">Click here</a></b>.
 
 	</div>
 </td>
@@ -158,6 +167,7 @@ function dethide(id)
 
 
 	<form method="post">
+	<?php wp_nonce_field( 'xyz_smap_tw_settings_form_nonce' );?>
 		<input type="hidden" value="config">
 
 
@@ -170,7 +180,7 @@ function dethide(id)
 					<td><input id="xyz_twap_twconsumer_id"
 						name="xyz_twap_twconsumer_id" type="text"
 						value="<?php if($tms1=="") {echo esc_html(get_option('xyz_twap_twconsumer_id'));}?>" />
-						<a href="http://docs.xyzscripts.com/wordpress-plugins/social-media-auto-publish/creating-twitter-application" target="_blank">How can I create a Twitter Application?</a>
+						<a href="http://help.xyzscripts.com/docs/social-media-auto-publish/faq/how-can-i-create-twitter-application/" target="_blank">How can I create a Twitter Application?</a>
 					</td>
 				</tr>
 
@@ -216,7 +226,9 @@ function dethide(id)
 							- Insert the excerpt of your post.<br />{POST_CONTENT} - Insert
 							the description of your post.<br />{BLOG_TITLE} - Insert the name
 							of your blog.<br />{USER_NICENAME} - Insert the nicename
-							of the author.
+							of the author.<br />{POST_ID} - Insert the ID of your post.
+							<br />{POST_PUBLISH_DATE} - Insert the publish date of your post.
+							<br />{USER_DISPLAY_NAME} - Insert the display name of the author.
 						</div></td>
 	<td>
 	<select name="xyz_twap_info" id="xyz_twap_info" onchange="xyz_twap_info_insert(this)">
@@ -227,6 +239,9 @@ function dethide(id)
 		<option value ="4">{POST_CONTENT}   </option>
 		<option value ="5">{BLOG_TITLE}   </option>
 		<option value ="6">{USER_NICENAME}   </option>
+		<option value ="7">{POST_ID}   </option>
+		<option value ="8">{POST_PUBLISH_DATE}   </option>
+		<option value ="9">{USER_DISPLAY_NAME}   </option>
 		</select> </td></tr><tr><td>&nbsp;</td><td>
 		<textarea id="xyz_twap_twmessage"  name="xyz_twap_twmessage" style="height:80px !important;" ><?php if($tms6=="") {
 								echo esc_textarea(get_option('xyz_twap_twmessage'));}?></textarea>
@@ -246,6 +261,17 @@ function dethide(id)
 					</select>
 					</td>
 				</tr>
+				
+				<tr valign="top">
+					<td>Twitter character limit  <img src="<?php echo $heimg?>"
+							onmouseover="detdisplay('xyz_twap_tw_char_limit')" onmouseout="dethide('xyz_twap_tw_char_limit')">
+							<div id="xyz_twap_tw_char_limit" class="informationdiv" style="display: none;">
+							The character limit of tweets  is 280.<br/>
+							Use 140 for languages like Chinese, Japanese and Korean <br/>which won't get the 280 character limit.<br />
+							</div></td>
+				<td>
+					<input id="xyz_twap_tw_char_limit"  name="xyz_twap_tw_char_limit" type="text" value="<?php echo esc_html(get_option('xyz_twap_tw_char_limit'));?>" style="width: 200px">
+				</td></tr>
 				
 				<tr valign="top">
 					<td>Enable auto publish	posts to my twitter account
@@ -280,9 +306,14 @@ function dethide(id)
 
 	if(isset($_POST['bsettngs']))
 	{
+		if (! isset( $_REQUEST['_wpnonce'] )|| ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'xyz_smap_tw_basic_settings_form_nonce' ))
+		{
+			wp_nonce_ays( 'xyz_smap_tw_basic_settings_form_nonce' );
+			exit();
+		}
 
-		$xyz_twap_include_pages=$_POST['xyz_twap_include_pages'];
-		$xyz_twap_include_posts=$_POST['xyz_twap_include_posts'];
+		$xyz_twap_include_pages=intval($_POST['xyz_twap_include_pages']);
+		$xyz_twap_include_posts=intval($_POST['xyz_twap_include_posts']);
 
 		if($_POST['xyz_twap_cat_all']=="All")
 			$twap_category_ids=$_POST['xyz_twap_cat_all'];//redio btn name
@@ -294,10 +325,10 @@ function dethide(id)
         if(isset($_POST['post_types']))
 		$xyz_customtypes=$_POST['post_types'];
 
-        $xyz_twap_peer_verification=$_POST['xyz_twap_peer_verification'];
-        $xyz_twap_premium_version_ads=$_POST['xyz_twap_premium_version_ads'];
-        $xyz_twap_default_selection_edit=$_POST['xyz_twap_default_selection_edit'];
-        $xyz_twap_utf_decode_enable=$_POST['xyz_twap_utf_decode_enable'];
+        $xyz_twap_peer_verification=intval($_POST['xyz_twap_peer_verification']);
+        $xyz_twap_premium_version_ads=intval($_POST['xyz_twap_premium_version_ads']);
+        $xyz_twap_default_selection_edit=intval($_POST['xyz_twap_default_selection_edit']);
+        $xyz_twap_utf_decode_enable=intval($_POST['xyz_twap_utf_decode_enable']);
         
         //$xyz_twap_future_to_publish=$_POST['xyz_twap_future_to_publish'];
 		$twap_customtype_ids="";
@@ -358,7 +389,7 @@ function dethide(id)
 
 
 		<form method="post">
-
+<?php wp_nonce_field( 'xyz_smap_tw_basic_settings_form_nonce' );?>
 			<table class="widefat xyz_twap_widefat_table" style="width: 99%">
 
 				<tr valign="top">
@@ -396,7 +427,7 @@ function dethide(id)
 					<td  colspan="1">Select post categories for auto publish
 					</td>
 					<td><input type="hidden"
-						value="<?php echo $xyz_twap_include_categories;?>"
+						value="<?php echo esc_html($xyz_twap_include_categories);?>"
 						name="xyz_twap_sel_cat" id="xyz_twap_sel_cat"> <input type="radio"
 						name="xyz_twap_cat_all" id="xyz_twap_cat_all" value="All"
 						onchange="rd_cat_chn(1,-1)"
@@ -614,9 +645,9 @@ function dethide(id)
 
 	<script type="text/javascript">
 	//drpdisplay();
-var catval='<?php echo $xyz_twap_include_categories; ?>';
-var custtypeval='<?php echo $xyz_twap_include_customposttypes; ?>';
-var get_opt_cats='<?php echo get_option('xyz_twap_include_posts');?>';
+var catval='<?php echo esc_html($xyz_twap_include_categories); ?>';
+var custtypeval='<?php echo esc_html($xyz_twap_include_customposttypes); ?>';
+var get_opt_cats='<?php echo esc_html(get_option('xyz_twap_include_posts'));?>';
 jQuery(document).ready(function() {
 	  if(catval=="All")
 		  jQuery("#cat_dropdown_span").hide();
@@ -650,7 +681,7 @@ document.getElementById('xyz_twap_sel_cat').value=sel_str;
 
 }
 
-var d1='<?php echo $xyz_twap_include_categories;?>';
+var d1='<?php echo esc_html($xyz_twap_include_categories);?>';
 splitText = d1.split(",");
 jQuery.each(splitText, function(k,v) {
 jQuery("#xyz_twap_catlist").children("option[value="+v+"]").attr("selected","selected");

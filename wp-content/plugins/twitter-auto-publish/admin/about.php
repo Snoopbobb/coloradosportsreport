@@ -1,6 +1,22 @@
 <?php
+if( !defined('ABSPATH') ){ exit();}
 ?>
 <style>
+.buy-button {
+	display:block;
+	color:white;
+    padding:5px 21px;
+    background: #545454;
+    border: 0;
+    border-bottom: 2px solid #545454;
+    cursor: pointer;
+    -webkit-box-shadow: inset 0 -2px #545454;
+    box-shadow: inset 0 -2px #545454;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius:3px;
+}
 </style>
 
 <h1 style="visibility: visible;">Twitter Auto Publish (V <?php echo xyz_twap_plugin_get_version(); ?>)</h1>
@@ -68,7 +84,7 @@ Twitter Auto Publish automatically publishes posts from your blog to your  Twitt
 	</tr>
 	<!-- Posting Options  -->
 	<tr>
-		<td rowspan="11"><h4>Posting Options</h4></td>
+		<td rowspan="12"><h4>Posting Options</h4></td>
 		<td>Publish to facebook profile/pages</td>
 		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
 		</td>
@@ -141,7 +157,15 @@ Twitter Auto Publish automatically publishes posts from your blog to your  Twitt
 	</tr>
 	
 	<tr>
-		<td>Hash Tags support for Facebook, Twitter, Pinterest and Google plus</td>
+		<td>Hash Tags support for Facebook, Twitter, Linkedin, Pinterest and Google plus</td>
+		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
+		</td>
+		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
+		</td>
+	</tr>
+	
+	<tr>
+		<td>Option to use post tags as hash tags</td>
 		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
 		</td>
 		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
@@ -159,7 +183,7 @@ Twitter Auto Publish automatically publishes posts from your blog to your  Twitt
 	<!-- Image Options  -->
 	
 	<tr>
-	<td rowspan="3"><h4>Image Options</h4></td>
+	<td rowspan="5"><h4>Image Options</h4></td>
 		<td>Publish images along with post content</td>
 		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
 		</td>
@@ -184,10 +208,45 @@ Twitter Auto Publish automatically publishes posts from your blog to your  Twitt
 		</td>
 	</tr>
 	
+	<tr>
+		<td>Publish multiple images to facebook and twitter along with post content</td>
+		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
+		</td>
+		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
+		</td>
+	</tr>
+	
+	<tr>
+		<td>Option to specify multiphoto preference from post content and post meta</td>
+		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
+		</td>
+		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
+		</td>
+	</tr>
+	
+	<!-- Video Options  -->
+	
+	<tr>
+	<td rowspan="2"><h4>Video Options</h4></td>
+		<td>Publish video to facebook and twitter along with post content</td>
+		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
+		</td>
+		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
+		</td>
+	</tr>
+	
+	<tr>
+		<td>Option to specify preference from post content, post meta and open graph tags</td>
+		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
+		</td>
+		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
+		</td>
+	</tr>
+	
 	<!-- Filter Options  -->
 		
 	<tr>
-	<td rowspan="6"><h4>Filter Options</h4></td>
+	<td rowspan="7"><h4>Filter Options</h4></td>
 		<td>Filter posts to publish based on categories</td>
 		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
 		</td>
@@ -229,6 +288,14 @@ Twitter Auto Publish automatically publishes posts from your blog to your  Twitt
 	
 	<tr>
 		<td>Enable/Disable page publishing for individual accounts</td>
+		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
+		</td>
+		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
+		</td>
+	</tr>
+	
+	<tr>
+		<td>Override auto publish scheduling for individual accounts</td>
 		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
 		</td>
 		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
@@ -277,7 +344,7 @@ Twitter Auto Publish automatically publishes posts from your blog to your  Twitt
 	</tr>
 	<tr>
 		<td>View auto publish error logs</td>
-		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
+		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
 		</td>
 		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
 		</td>
@@ -313,6 +380,42 @@ Twitter Auto Publish automatically publishes posts from your blog to your  Twitt
 		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
 		</td>
 		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
+		</td>
+	</tr>
+	
+	<!-- Addons and Support -->
+	<tr>
+		<td rowspan="3"><h4>Addon Features</h4></td>
+		<td>Advanced Autopublish Scheduler</td>
+		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
+		</td>
+		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
+		</td>
+		</tr>
+		<tr>
+		<td>URL-Shortener</td>
+		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
+		</td>
+		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
+		</td>
+	</tr>
+	<tr>
+		<td>Privilege Management</td>
+		<td><img src="<?php echo plugins_url("images/cross.png",__FILE__);?>">
+		</td>
+		<td><img src="<?php echo plugins_url("images/tick.png",__FILE__);?>">
+		</td>
+	</tr>
+	<tr>
+		<td rowspan="2"><h4>Other</h4></td>
+		<td>Price</td>
+		<td>FREE</td>
+		<td>Starts from 39 USD</td>
+	</tr>
+	<tr>
+		<td>Purchase</td>
+		<td></td>
+		<td style="padding: 2px" ><a target="_blank"href="https://xyzscripts.com/members/product/purchase/XYZWPSMPPRE"  class="buy-button">Buy Now</a>
 		</td>
 	</tr>
 		

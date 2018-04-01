@@ -3,8 +3,8 @@ Contributors: f1logic
 Donate link: http://xyzscripts.com/donate/
 Tags:  twitter, twitter auto publish, publish post to twitter, add link to twitter, twitter publishing, post to twitter, social media auto publish, social media publishing, social network auto publish, social media, social network
 Requires at least: 3.0
-Tested up to: 4.5.3
-Stable tag: 1.3.1
+Tested up to: 4.9.1
+Stable tag: 1.3.4
 License: GPLv2 or later
 
 Publish posts automatically to Twitter.
@@ -52,19 +52,21 @@ The supported post elements which can be published are given below.
     Permalink
     Blog title
     User nicename
+    Post ID
+    Post publish date
 
 
 = About =
 
 Twitter Auto Publish is developed and maintained by [XYZScripts](http://xyzscripts.com/ "xyzscripts.com"). For any support, you may [contact us](http://xyzscripts.com/support/ "XYZScripts Support").
 
-★ [Twitter Auto Publish User Guide](http://docs.xyzscripts.com/wordpress-plugins/twitter-auto-publish/ "Twitter Auto Publish User Guide")
-★ [Twitter Auto Publish FAQ](http://kb.xyzscripts.com/wordpress-plugins/twitter-auto-publish/ "Twitter Auto Publish FAQ")
+★ [Twitter Auto Publish User Guide](http://help.xyzscripts.com/docs/twitter-auto-publish/ "Twitter Auto Publish User Guide")
+★ [Twitter Auto Publish FAQ](http://help.xyzscripts.com/docs/twitter-auto-publish/faq/ "Twitter Auto Publish FAQ")
 
 == Installation ==
 
-★ [Twitter Auto Publish User Guide](http://docs.xyzscripts.com/wordpress-plugins/twitter-auto-publish/ "Twitter Auto Publish User Guide")
-★ [Twitter Auto Publish FAQ](http://kb.xyzscripts.com/wordpress-plugins/twitter-auto-publish/ "Twitter Auto Publish FAQ")
+★ [Twitter Auto Publish User Guide](http://help.xyzscripts.com/docs/twitter-auto-publish/installation/ "Twitter Auto Publish User Guide")
+★ [Twitter Auto Publish FAQ](http://help.xyzscripts.com/docs/twitter-auto-publish/faq/ "Twitter Auto Publish FAQ")
 
 1. Extract `twitter-auto-publish.zip` to your `/wp-content/plugins/` directory.
 2. In the admin panel under plugins activate Twitter Auto Publish.
@@ -75,8 +77,8 @@ If you need any further help, you may contact our [support desk](http://xyzscrip
 
 == Frequently Asked Questions ==
 
-★ [Twitter Auto Publish User Guide](http://docs.xyzscripts.com/wordpress-plugins/twitter-auto-publish/ "Twitter Auto Publish User Guide")
-★ [Twitter Auto Publish FAQ](http://kb.xyzscripts.com/wordpress-plugins/twitter-auto-publish/ "Twitter Auto Publish FAQ")
+★ [Twitter Auto Publish User Guide](http://help.xyzscripts.com/docs/twitter-auto-publish/user-guide/ "Twitter Auto Publish User Guide")
+★ [Twitter Auto Publish FAQ](http://help.xyzscripts.com/docs/twitter-auto-publish/faq/ "Twitter Auto Publish FAQ")
 
 = 1. The Twitter Auto Publish is not working properly. =
 
@@ -103,7 +105,9 @@ You may use post title, content, excerpt, permalink, site title and user nicenam
 SSL peer verification may not be functioning in your server. Please turn off SSL peer verification in settings of plugin and try again.
 
 
-More questions ? [Drop a mail](http://xyzscripts.com/members/support/ "XYZScripts Support") and we shall get back to you with the answers.
+= More questions ? =
+
+[Drop a mail](http://xyzscripts.com/support/ "XYZScripts Support") and we shall get back to you with the answers.
 
 
 == Screenshots ==
@@ -112,6 +116,23 @@ More questions ? [Drop a mail](http://xyzscripts.com/members/support/ "XYZScript
 2. Publishing options while creating a post.
 
 == Changelog ==
+
+= Twitter Auto Publish 1.3.4 =
+* Added USER_DISPLAY_NAME in message formats
+* Twitter character length limit updated
+* Minor security issues fixed
+* Twitter api updated
+
+= Twitter Auto Publish 1.3.3 =
+* Added POST_ID and POST_PUBLISH_DATE in message formats
+
+= Twitter Auto Publish 1.3.2 =
+* utf-8 decoding issue fixed
+* Visual composer compatiblity issue fixed
+* Minor bugs fixed
+* Nonce added
+* Prevented direct access to plugin files
+* Data validation updated
 
 = Twitter Auto Publish 1.3.1 =
 * Fixed custom post types autopublish issue	
@@ -169,8 +190,8 @@ First official launch.
 
 == More Information ==
 
-★ [Twitter Auto Publish User Guide](http://docs.xyzscripts.com/wordpress-plugins/twitter-auto-publish/ "Twitter Auto Publish User Guide")
-★ [Twitter Auto Publish FAQ](http://kb.xyzscripts.com/wordpress-plugins/twitter-auto-publish/ "Twitter Auto Publish FAQ")
+★ [Twitter Auto Publish User Guide](http://help.xyzscripts.com/docs/twitter-auto-publish/ "Twitter Auto Publish User Guide")
+★ [Twitter Auto Publish FAQ](http://help.xyzscripts.com/docs/twitter-auto-publish/faq/ "Twitter Auto Publish FAQ")
 
 = Troubleshooting =
 

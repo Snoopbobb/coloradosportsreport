@@ -1,4 +1,5 @@
 <?php
+if( !defined('ABSPATH') ){ exit();}
 function twap_free_network_install($networkwide) {
 	global $wpdb;
 
@@ -64,6 +65,7 @@ function twap_install_free()
 	add_option('xyz_twap_premium_version_ads', '1');
 	add_option('xyz_twap_default_selection_edit', '0');
 	add_option('xyz_twap_utf_decode_enable', '0');
+	add_option('xyz_twap_tw_char_limit',280);
 }
 
 

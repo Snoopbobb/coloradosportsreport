@@ -1,4 +1,5 @@
 <?php
+if( !defined('ABSPATH') ){ exit();}
 function wp_fbap_admin_notice()
 {
 	add_thickbox();
@@ -42,18 +43,15 @@ $sharelink_text_fb = $sharelink_text_array_fb[$sharelink_text_fb];
 	<a class="button" style="background-color:#007bb6;color:white;margin-right:4px;margin-left:20px;margin-top: 25px;" href="http://www.linkedin.com/shareArticle?mini=true&url=https://wordpress.org/plugins/facebook-auto-publish/" target="_blank">LinkedIn</a>
 	<a class="button" style="background-color:#dd4b39;color:white;margin-right:4px;margin-left:20px;margin-top: 25px;" href="https://plus.google.com/share?&hl=en&url=https://wordpress.org/plugins/facebook-auto-publish/" target="_blank">google+</a>
 	</div>
-	
-	
-	
-	</div>';
-	
+	</div>';	
 	
 }
 $fbap_installed_date = get_option('fbap_installed_date');
 if ($fbap_installed_date=="") {
 	$fbap_installed_date = time();
 }
-if($fbap_installed_date < ( time() - 2952000 ))
+
+if($fbap_installed_date < ( time() - (30*24*60*60) ))
 {
 	if (get_option('xyz_fbap_dnt_shw_notice') != "hide")
 	{

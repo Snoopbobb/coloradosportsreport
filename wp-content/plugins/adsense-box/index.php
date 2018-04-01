@@ -5,7 +5,7 @@ Description: Adsense Box is an plugin show adsense widget.
 Plugin URI: https://wordpress.org/plugins/adsense-box
 Author: PB One
 Author URI: http://photoboxone.com/
-Version: 1.0.5
+Version: 1.0.9
 License: GPL-2.0+
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */

@@ -1,4 +1,5 @@
 <?php 
+if( !defined('ABSPATH') ){ exit();}
 ?>
 <div >
 
@@ -41,9 +42,7 @@
 						<tr><td colspan="4" style="padding: 5px;">No logs Found</td></tr>
 						<?php 
 					}
-					
-					
-					
+									
 					if(is_array($post_fb_logsmain_array))
 					{
 						for($i=4;$i>=0;$i--)

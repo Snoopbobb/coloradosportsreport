@@ -1,4 +1,5 @@
 <?php
+if( !defined('ABSPATH') ){ exit();}
 function wp_twap_admin_notice()
 {
 	add_thickbox();

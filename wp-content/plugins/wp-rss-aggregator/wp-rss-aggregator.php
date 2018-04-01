@@ -3,7 +3,7 @@
      * Plugin Name: WP RSS Aggregator
      * Plugin URI: https://www.wprssaggregator.com/#utm_source=wpadmin&utm_medium=plugin&utm_campaign=wpraplugin
      * Description: Imports and aggregates multiple RSS Feeds.
-     * Version: 4.9.1
+     * Version: 4.11.2
      * Author: RebelCode
      * Author URI: https://www.wprssaggregator.com
      * Text Domain: wprss
@@ -30,7 +30,7 @@
 
     /**
      * @package     WPRSSAggregator
-     * @version     4.9.1
+     * @version     4.11.2
      * @since       1.0
      * @author      RebelCode
      * @copyright   Copyright (c) 2012-2016, RebelCode Ltd.
@@ -44,7 +44,7 @@
 
     // Set the version number of the plugin.
     if( !defined( 'WPRSS_VERSION' ) )
-        define( 'WPRSS_VERSION', '4.9.1', true );
+        define( 'WPRSS_VERSION', '4.11.2', true );
 
     if( !defined( 'WPRSS_WP_MIN_VERSION' ) )
         define( 'WPRSS_WP_MIN_VERSION', '4.0', true );
@@ -90,7 +90,8 @@
 
     // Set the constant path to the plugin's log file.
     if( !defined( 'WPRSS_LOG_FILE' ) )
-        define( 'WPRSS_LOG_FILE', WPRSS_DIR . 'log', true );
+        define( 'WPRSS_LOG_FILE', WP_CONTENT_DIR . '/log/wprss/log', true );
+
     if( !defined( 'WPRSS_LOG_FILE_EXT' ) )
         define( 'WPRSS_LOG_FILE_EXT', '.txt', true );
 
@@ -110,6 +111,33 @@
     if ( !defined( 'WPRSS_ITEM_IMPORT_TIME_LIMIT' ) ) {
         define( 'WPRSS_ITEM_IMPORT_TIME_LIMIT', 15, TRUE );
     }
+    // Where to take the diagnostic tests from
+    if ( !defined( 'WPRACORE_DIAG_TESTS_DIR' ) ) {
+        define( 'WPRACORE_DIAG_TESTS_DIR', WPRSS_DIR . 'test/diag' );
+    }
+
+    define('WPRSS_CORE_PLUGIN_NAME', 'WP RSS Aggregator');
+
+    /**
+     * Code of the Core plugin.
+     *
+     * @since 4.11
+     */
+    define('WPRSS_PLUGIN_CODE', 'wprss');
+
+    /**
+     * Prefix for events used by this plugin.
+     *
+     * @since 4.11
+     */
+    define('WPRSS_EVENT_PREFIX', \WPRSS_PLUGIN_CODE . '_');
+
+    /**
+     * Whether this plugin is in debug mode.
+     *
+     * @since 4.11
+     */
+    define('WPRSS_DEBUG', \WP_DEBUG);
 
     /**
      * Load required files.
@@ -119,10 +147,29 @@
     require_once ( WPRSS_INC . 'autoload.php' );
     // Adding autoload paths
     wprss_autoloader()->add('Aventura\\Wprss\\Core', WPRSS_INC);
+    wprss_autoloader()->add('Aventura\\Wprss\\Core\\DiagTest', WPRACORE_DIAG_TESTS_DIR);
+    // Add tests
+    add_filter('wprss_diag_tester_sources', function ($event) {
+        $sources = $event->getData('sources');
+
+        $locator = new \Dhii\SimpleTest\Locator\FilePathLocator();
+        $locator->addPath(new \RecursiveDirectoryIterator(WPRACORE_DIAG_TESTS_DIR, 1));
+        $testSource = new \RebelCode\Wprss\Debug\DiagTest\Model\TestSource($locator->locate(), wprss()->getCode(), WPRSS_CORE_PLUGIN_NAME);
+
+        $sources[$testSource->getCode()] = $testSource;
+        $event->setData('sources', $sources);
+
+        return $event;
+    });
+
+    /* Only function definitions, no effect! */
+    require_once(WPRSS_INC . 'functions.php');
+
+    /* Dependency injection */
+    require_once ( WPRSS_INC . 'di.php' );
 
     /* Load install, upgrade and migration code. */
     require_once ( WPRSS_INC . 'update.php' );
-
     /* Load the shortcodes functions file. */
     require_once ( WPRSS_INC . 'shortcodes.php' );
 
@@ -232,7 +279,7 @@
     require_once ( WPRSS_INC . 'admin-help-settings.php' );
 
 	/* SimplePie */
-	require_once ( ABSPATH . WPINC . '/class-feed.php' );
+	require_once ( ABSPATH . WPINC . '/class-simplepie.php' );
 
 	/* Access to feed */
 	require_once ( WPRSS_INC . 'feed-access.php' );
@@ -240,58 +287,29 @@
     /* Load the fallbacks for mbstring */
     require_once ( WPRSS_INC . 'fallback-mbstring.php' );
 
+    /* The "Leave a Review" notification module */
+    require_once ( WPRSS_INC . 'leave-review-notification.php' );
+
     // Initializes licensing
     add_action( 'plugins_loaded', 'wprss_licensing' );
 
     register_activation_hook( __FILE__ , 'wprss_activate' );
     register_deactivation_hook( __FILE__ , 'wprss_deactivate' );
 
+    do_action('wprss_pre_init');
 
     /**
-     * Returns the Spinnerchief Addon class singleton instance.
+     * Returns the Core plugin singleton instance.
+     *
+     * Using DI container since 4.11.
      *
      * @since 4.8.1
      * @return Aventura\Wprss\Core\Plugin
      */
     function wprss() {
-        static $plugin = null;
-
-
-        // One time initialization
-        if (is_null($plugin)) {
-            static $timesCalled = 0;
-            if ($timesCalled) {
-                throw new Exception('WP RSS Aggregator has been initialized recursively');
-            }
-            $timesCalled++;
-
-            /**
-             * Basically, we could just do this here:
-             * Factory::create();
-             *
-             * However, the actual setup allows for even further customization.
-             * In fact, the factory can be substituted by some entirely different factory,
-             * that creates and initializes a different plugin in a different way.
-             */
-
-            $factoryClassName = apply_filters('wprss_core_plugin_factory_class_name',
-                'Aventura\\Wprss\\Core\\Factory');
-
-            if (!class_exists($factoryClassName)) {
-                throw new Aventura\Wprss\Exception(
-                    sprintf('Could not initialize add-on: Factory class "%1$s" does not exist', $factoryClassName));
-            }
-
-            $plugin = call_user_func_array(array($factoryClassName, 'create'), array(array(
-                'basename'      => __FILE__,
-                'name'          => 'WP RSS Aggregator'
-            )));
-        }
-
-        return $plugin;
+        return wprss_wp_container()->get(sprintf('%1$splugin', \WPRSS_SERVICE_ID_PREFIX));
     }
 
-    require_once(WPRSS_INC . 'functions.php');
     try {
         $instance = wprss();
     } catch (Exception $e) {
@@ -300,7 +318,6 @@
         }
         wp_die( $e->getMessage() );
     }
-
 
     add_action( 'init', 'wprss_init' );
     /**
@@ -330,7 +347,7 @@
 
                     'target'            =>  '#wpadminbar',
                     'options'           =>  array(
-                        'content'           =>  '<h3>' . __( 'Help improve WP RSS Aggregator', WPRSS_TEXT_DOMAIN ) . '</h3>' . '<p>' . __( 'You\'ve just installed WP RSS Aggregator. Please helps us improve it by allowing us to gather anonymous usage stats so we know which configurations, plugins and themes to test with.', WPRSS_TEXT_DOMAIN ) . '</p>',
+                        'content'           =>  '<h3>' . sprintf( __( 'Help improve %1$s', WPRSS_TEXT_DOMAIN ), WPRSS_CORE_PLUGIN_NAME ) . '</h3>' . '<p>' . sprintf( __( 'You\'ve just installed %1$s. Please helps us improve it by allowing us to gather anonymous usage stats so we know which configurations, plugins and themes to test with.', WPRSS_TEXT_DOMAIN ), WPRSS_CORE_PLUGIN_NAME ) . '</p>',
                         'position'          =>  array(
                             'edge'              =>  'top',
                             'align'             =>  'center',
@@ -463,9 +480,9 @@
 		wprss_admin_notice_add(array(
 			'id'			=> 'wp_version_warning',
 			'content'		=> sprintf( __(
-					'<p><strong>WP RSS Aggregator requires WordPress to be of version %1$s or higher.</strong></br>'
-					. 'Older versions of WordPress are no longer supported by WP RSS Aggregator. Please upgrade your WordPress core to continue benefiting from WP RSS Aggregator support services.</p>',
-				WPRSS_TEXT_DOMAIN ), WPRSS_WP_MIN_VERSION ),
+					'<p><strong>%2$s requires WordPress to be of version %1$s or higher.</strong></br>'
+					. 'Older versions of WordPress are no longer supported by %2$s. Please upgrade your WordPress core to continue benefiting from %2$s support services.</p>',
+				WPRSS_TEXT_DOMAIN ), WPRSS_WP_MIN_VERSION, WPRSS_CORE_PLUGIN_NAME ),
 			'notice_type'	=> 'error'
 		));
 
@@ -481,9 +498,9 @@
 		wprss_admin_notice_add(array(
 			'id'			=> 'php_version_change_warning',
 			'content'		=> sprintf( __(
-					'<p><strong>WP RSS Aggregator is moving to PHP %1$s</strong></br>'
+					'<p><strong>%2$s is moving to PHP %1$s</strong></br>'
 					. 'The next release of your favourite aggregator will not support PHP 5.2. <a href="http://www.wprssaggregator.com/wp-rss-aggregator-to-require-php-5-3/" target="_blank">Read why here</a></p>',
-				WPRSS_TEXT_DOMAIN ), $minVersion ),
+				WPRSS_TEXT_DOMAIN ), $minVersion, WPRSS_CORE_PLUGIN_NAME ),
 			'notice_type'	=> 'error',
 			'condition'		=> 'wprss_is_wprss_page'
 		));
@@ -500,7 +517,7 @@
         /* Prevents activation of plugin if compatible version of WordPress not found */
         if ( !wprss_wp_min_version_satisfied() ) {
             deactivate_plugins ( basename( __FILE__ ));     // Deactivate plugin
-            wp_die( sprintf ( __( 'This plugin requires WordPress version %1$s or higher.' ), WPRSS_WP_MIN_VERSION ), 'WP RSS Aggregator', array( 'back_link' => true ) );
+            wp_die( sprintf ( __( '%2$s requires WordPress version %1$s or higher.' ), WPRSS_WP_MIN_VERSION, WPRSS_CORE_PLUGIN_NAME ), WPRSS_CORE_PLUGIN_NAME, array( 'back_link' => true ) );
         }
         wprss_settings_initialize();
         flush_rewrite_rules();
@@ -701,6 +718,6 @@
         if ( is_null( $extension ) )
             $extension = '.js';
 
-        $script_url = WPRSS_JS . $url . (wprss_is_script_debug() ? wprss_get_minified_extension_prefix() : '') . $extension;
+        $script_url = WPRSS_JS . $url . (!wprss_is_script_debug() ? wprss_get_minified_extension_prefix() : '') . $extension;
         return apply_filters( 'wprss_script_url',  $script_url, $url, $extension );
     }

@@ -1,5 +1,5 @@
 <?php 
-
+if( !defined('ABSPATH') ){ exit();}
 /*add_action('publish_post', 'xyz_fbap_link_publish');
 add_action('publish_page', 'xyz_fbap_link_publish');
 $xyz_fbap_future_to_publish=get_option('xyz_fbap_future_to_publish');
@@ -23,7 +23,7 @@ function xyz_link_fbap_future_to_publish($new_status, $old_status, $post){
 	
 	$post_permissin=get_option('xyz_fbap_post_permission');
 	if(isset($_POST['xyz_fbap_post_permission']))
-		$post_permissin=$_POST['xyz_fbap_post_permission'];
+		$post_permissin=intval($_POST['xyz_fbap_post_permission']);
 	else 
 	{
 		if ($post_permissin == 1) {
@@ -40,10 +40,8 @@ function xyz_link_fbap_future_to_publish($new_status, $old_status, $post){
 	{
 		if($new_status == 'publish')
 		{
-		
 		if(!in_array($postid,$GLOBALS['fbap_dup_publish'])) {
-			
-		  $GLOBALS['fbap_dup_publish'][]=$postid;
+			  $GLOBALS['fbap_dup_publish'][]=$postid;
 	       xyz_fbap_link_publish($postid);
 	      
 		   }
@@ -53,39 +51,23 @@ function xyz_link_fbap_future_to_publish($new_status, $old_status, $post){
 	
 }
 
-//////////
-
-/*$xyz_fbap_include_customposttypes=get_option('xyz_fbap_include_customposttypes');
-$carr=explode(',', $xyz_fbap_include_customposttypes);
-foreach ($carr  as $cstyps ) {
-	add_action('publish_'.$cstyps, 'xyz_fbap_link_publish');
-
-}*/
-
 function xyz_fbap_link_publish($post_ID) {
 	$_POST_CPY=$_POST;
 	$_POST=stripslashes_deep($_POST);
 	
-	
-	
 	$post_permissin=get_option('xyz_fbap_post_permission');
 	if(isset($_POST['xyz_fbap_post_permission']))
-		$post_permissin=$_POST['xyz_fbap_post_permission'];
-	
-	
+		$post_permissin=intval($_POST['xyz_fbap_post_permission']);
+		
 	if ($post_permissin != 1) {
 		$_POST=$_POST_CPY;
 		return ;
 	
-	} else if (isset($_POST['_inline_edit'])  AND (get_option('xyz_fbap_default_selection_edit') == 0) ) {
+	}elseif(( (isset($_POST['_inline_edit'])) || (isset($_REQUEST['bulk_edit'])) ) && (get_option('xyz_fbap_default_selection_edit') == 0) ) {
 		$_POST=$_POST_CPY;
 		return;
 	}
-	
-	
-	
-	
-	
+
 	$get_post_meta=get_post_meta($post_ID,"xyz_fbap",true);
 	if($get_post_meta!=1)
 		add_post_meta($post_ID, "xyz_fbap", "1");
@@ -97,7 +79,7 @@ function xyz_fbap_link_publish($post_ID) {
 	$appid=get_option('xyz_fbap_application_id');
 	$appsecret=get_option('xyz_fbap_application_secret');
 	$useracces_token=get_option('xyz_fbap_fb_token');
-
+	$app_name=get_option('xyz_fbap_application_name');
 
 	$message=get_option('xyz_fbap_message');
 	if(isset($_POST['xyz_fbap_message']))
@@ -107,16 +89,17 @@ function xyz_fbap_link_publish($post_ID) {
 	
 	$posting_method=get_option('xyz_fbap_po_method');
 	if(isset($_POST['xyz_fbap_po_method']))
-		$posting_method=$_POST['xyz_fbap_po_method'];
-	
+		$posting_method=intval($_POST['xyz_fbap_po_method']);
 	
 	$af=get_option('xyz_fbap_af');
 	
 	$postpp= get_post($post_ID);global $wpdb;
-	$entries0 = $wpdb->get_results( 'SELECT user_nicename FROM '.$wpdb->prefix.'users WHERE ID='.$postpp->post_author);
+	$entries0 = $wpdb->get_results($wpdb->prepare( 'SELECT user_nicename,display_name FROM '.$wpdb->prefix.'users WHERE ID=%d',$postpp->post_author));
 	
 	foreach( $entries0 as $entry ) {			
-	$user_nicename=$entry->user_nicename;}
+	$user_nicename=$entry->user_nicename;
+	$user_displayname=$entry->display_name;
+	}
 	if ($postpp->post_status == 'publish')
 	{
 		$posttype=$postpp->post_type;
@@ -197,12 +180,12 @@ function xyz_fbap_link_publish($post_ID) {
 		$xyz_fbap_apply_filters=get_option('xyz_fbap_apply_filters');
 		$ar2=explode(",",$xyz_fbap_apply_filters);
 		$con_flag=$exc_flag=$tit_flag=0;
-		if(isset($ar2[0]))
-			if($ar2[0]==1) $con_flag=1;
-		if(isset($ar2[1]))
-			if($ar2[1]==2) $exc_flag=1;
-		if(isset($ar2[2]))
-			if($ar2[2]==3) $tit_flag=1;
+		if(isset($ar2))
+		{
+			if(in_array(1, $ar2)) $con_flag=1;
+			if(in_array(2, $ar2)) $exc_flag=1;
+			if(in_array(3, $ar2)) $tit_flag=1;
+		}
 		
 		$content = $postpp->post_content;
 		if($con_flag==1)
@@ -213,6 +196,8 @@ function xyz_fbap_link_publish($post_ID) {
 			$excerpt = apply_filters('the_excerpt', $excerpt);
 		$excerpt = html_entity_decode($excerpt, ENT_QUOTES, get_bloginfo('charset'));
 		$content = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', "", $content);
+		$content=  preg_replace("/\\[caption.*?\\].*?\\[.caption\\]/is", '', $content);
+		$content = preg_replace('/\[.+?\]/', '', $content);
 		$excerpt = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', "", $excerpt);
 
 		if($excerpt=="")
@@ -232,7 +217,6 @@ function xyz_fbap_link_publish($post_ID) {
 			$excerpt=strip_shortcodes($excerpt);
 		}
 		$description = $content;
-		
 		$description_org=$description;
 		
 		$attachmenturl=xyz_fbap_getimage($post_ID, $postpp->post_content);
@@ -242,9 +226,12 @@ function xyz_fbap_link_publish($post_ID) {
 			$image_found=0;
 		
 		$name = $postpp->post_title;
-		$caption = html_entity_decode(get_bloginfo('title'), ENT_QUOTES, get_bloginfo('charset'));
-		//if(get_option('xyz_fbap_utf_decode_enable')==1)
-		//	$caption=utf8_decode($caption);
+			
+		$xyz_fbap_caption_for_fb_attachment=get_option('xyz_fbap_caption_for_fb_attachment');
+		
+		$caption=get_bloginfo('title');
+		$caption = html_entity_decode($caption, ENT_QUOTES, get_bloginfo('charset'));
+		
 		if($tit_flag==1)
 		$name = apply_filters('the_title', $name);
 		$name = html_entity_decode($name, ENT_QUOTES, get_bloginfo('charset'));
@@ -282,9 +269,9 @@ function xyz_fbap_link_publish($post_ID) {
 					$acces_token=$useracces_token;$page_id=$user_page_id;
 				}
 
-				$fb=new FBAPFacebook(array(
-						'appId'  => $appid,
-						'secret' => $appsecret,
+				$fb=new Facebook\Facebook(array(
+						'app_id'  => $appid,
+						'app_secret' => $appsecret,
 						'cookie' => true
 				));
 				$message1=str_replace('{POST_TITLE}', $name, $message);
@@ -293,7 +280,10 @@ function xyz_fbap_link_publish($post_ID) {
 				$message4=str_replace('{POST_EXCERPT}', $excerpt, $message3);
 				$message5=str_replace('{POST_CONTENT}', $description, $message4);
 				$message5=str_replace('{USER_NICENAME}', $user_nicename, $message5);
-				
+				$message5=str_replace('{USER_DISPLAY_NAME}', $user_displayname, $message5);
+				$publish_time=get_the_time('Y/m/d',$post_ID );
+				$message5=str_replace('{POST_PUBLISH_DATE}', $publish_time, $message5);
+				$message5=str_replace('{POST_ID}', $post_ID, $message5);
 				$message5=str_replace("&nbsp;","",$message5);
 
                $disp_type="feed";
@@ -302,12 +292,8 @@ function xyz_fbap_link_publish($post_ID) {
 					$attachment = array('message' => $message5,
 							'access_token' => $acces_token,
 							'link' => $link,
-							'name' => $name,
-							'caption' => $caption,
-							'description' => $description_li,
-							'actions' => array(array('name' => $name,
-									'link' => $link)),
-							'picture' => $attachmenturl
+							'actions' => json_encode(array('name' => $name,
+							'link' => $link))
 
 					);
 				}
@@ -315,12 +301,7 @@ function xyz_fbap_link_publish($post_ID) {
 				{
 					$attachment = array('message' => $message5,
 							'access_token' => $acces_token,
-							'link' => $link,
-							'name' => $name,
-							'caption' => $caption,
-							'description' => $description_li,
-							'picture' => $attachmenturl
-
+							'link' => $link
 
 					);
 				}
@@ -337,21 +318,91 @@ function xyz_fbap_link_publish($post_ID) {
 					if($attachmenturl!="")
 					{
 						
+
 						if($posting_method==5)
 						{
 							try{
-							$albums = $fb->api("/$page_id/albums", "get", array('access_token'  => $acces_token));
+								$album_fount=0;
+								
+								$albums = $fb->get("/$page_id/albums", $acces_token);
+								$arrayResults = $albums->getGraphEdge()->asArray();
+								
+														
 							}
-							catch(Exception $e)
+							catch (Exception $e)
 							{
 								$fb_publish_status[$page_id."/albums"]=$e->getMessage();
-							}
-							foreach ($albums["data"] as $album) {
-								if ($album["type"] == "wall") {
-									$timeline_album = $album; break;
+									}
+							if(isset($arrayResults))
+							{
+								foreach ($arrayResults as $album) {
+									if (isset($album["name"]) && $album["name"] == "Timeline Photos") {
+										$album_fount=1;$timeline_album = $album; break;
+									}
 								}
 							}
 							if (isset($timeline_album) && isset($timeline_album["id"])) $page_id = $timeline_album["id"];
+							if($album_fount==0)
+							{
+								$attachment = array('name' => "Timeline Photos",
+										'access_token' => $acces_token,
+								);
+								try{
+									$album_create=$fb->post('/'.$page_id.'/albums', $attachment);
+									$album_node=$album_create->getGraphNode();
+									if (isset($album_node) && isset($album_node["id"]))
+										$page_id = $album_node["id"];
+								}
+								catch (Exception $e)
+								{
+									$fb_publish_status[$page_id."/albums"]=$e->getMessage();
+										
+								}
+									
+							}
+						}
+						else
+						{
+							try{
+								$album_fount=0;
+								
+								$albums = $fb->get("/$page_id/albums", $acces_token);
+								$arrayResults = $albums->getGraphEdge()->asArray();
+								
+							}
+							catch (Exception $e)
+							{
+								$fb_publish_status[$page_id."/albums"]=$e->getMessage();					
+							}
+							if(isset($arrayResults))
+							{
+								foreach ($arrayResults as $album)
+								{
+									if (isset($album["name"]) && $album["name"] == $app_name) {
+										$album_fount=1;
+										$app_album = $album; break;
+									}
+								}
+						
+							}
+							if (isset($app_album) && isset($app_album["id"])) $page_id = $app_album["id"];
+							if($album_fount==0)
+							{
+								$attachment = array('name' => $app_name,
+										'access_token' => $acces_token,
+								);
+								try{
+									$album_create=$fb->post('/'.$page_id.'/albums', $attachment);
+									$album_node=$album_create->getGraphNode();
+									if (isset($album_node) && isset($album_node["id"]))
+										$page_id = $album_node["id"];
+								}
+								catch (Exception $e)
+								{
+									$fb_publish_status[$page_id."/albums"]=$e->getMessage();
+								}
+									
+							}
 						}
 						
 						
@@ -375,14 +426,14 @@ function xyz_fbap_link_publish($post_ID) {
 				{
 					
 						$attachment=xyz_wp_fbap_attachment_metas($attachment,$link);
+						update_post_meta($post_ID, "xyz_fbap_insert_og", "1");
 				}
 				try{
-				$result = $fb->api('/'.$page_id.'/'.$disp_type.'/', 'post', $attachment);
-				
+					
+				$result = $fb->post('/'.$page_id.'/'.$disp_type.'/', $attachment);
 				}
 							catch(Exception $e)
 							{
-								
 								$fb_publish_status[$page_id."/".$disp_type]=$e->getMessage();
 							}
 
@@ -415,7 +466,6 @@ function xyz_fbap_link_publish($post_ID) {
 			
 			array_shift($update_opt_array);
 			array_push($update_opt_array,$post_fb_options);
-			
 			update_option('xyz_fbap_post_logs', $update_opt_array);
 			
 			

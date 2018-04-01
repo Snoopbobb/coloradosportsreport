@@ -2,6 +2,8 @@
 
 namespace Aventura\Wprss\Core;
 
+use Aventura\Wprss\Core\Component;
+
 /**
  * The Core instance of WP RSS Aggregator.
  *
@@ -9,8 +11,10 @@ namespace Aventura\Wprss\Core;
  */
 class Plugin extends Plugin\PluginAbstract
 {
-    const CODE = 'wprss';
-    const VERSION = WPRSS_VERSION;
+    const CODE = \WPRSS_PLUGIN_CODE;
+    const VERSION = \WPRSS_VERSION;
+
+    const POST_TYPE_FEED_SOURCE = \WPRSS_POST_TYPE_FEED_SOURCE;
 
     /**
      * Hooks the rest of the functionality of this class.
@@ -135,5 +139,53 @@ class Plugin extends Plugin\PluginAbstract
         $response->setAjaxData($data);
 
         return $response;
+    }
+
+    /**
+     * Retrieve the post type of feed sources.
+     *
+     * @since 4.10
+     *
+     * @return string The post type string of the feed source post type.
+     */
+    public function getFeedSourcePostType()
+    {
+        return static::POST_TYPE_FEED_SOURCE;
+    }
+
+    /**
+     * Retrieve the admin AJAX notices component singleton.
+     *
+     * @since 4.10
+     *
+     * @return Component\AdminAjaxNotices
+     */
+    public function getAdminAjaxNotices()
+    {
+        return $this->_getContainer()->get($this->_getServiceIdPrefix('admin_ajax_notices'));
+    }
+
+    /**
+     * Retrieve the "Leave Review" notification component singleton.
+     *
+     * @since 4.10
+     *
+     * @return Component\LeaveReviewNotification
+     */
+    public function getLeaveReviewNotification()
+    {
+        return $this->_getContainer()->get($this->_getServiceIdPrefix('leave_review'));
+    }
+
+    /**
+     * Retrieve the "Leave Review" notification component singleton.
+     *
+     * @since 4.10
+     *
+     * @return Component\AdminHelper
+     */
+    public function getAdminHelper()
+    {
+        return $this->_getContainer()->get($this->_getServiceIdPrefix('admin_helper'));
     }
 }

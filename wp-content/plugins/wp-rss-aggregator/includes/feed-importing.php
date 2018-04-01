@@ -12,6 +12,8 @@
 	add_filter('wprss_normalize_permalink', 'wprss_google_alerts_url_fix', 10);
 	add_filter('wprss_normalize_permalink', 'wprss_convert_video_permalink', 100);
 
+    // Adds comparators for item sorting
+    add_filter('wprss_item_comparators', 'wprss_sort_comparators_default');
 
 	add_action( 'wprss_fetch_single_feed_hook', 'wprss_fetch_insert_single_feed_items' );
 	/**
@@ -72,11 +74,15 @@
 			wprss_log_obj( 'Feed URL is valid', $feed_url, null, WPRSS_LOG_LEVEL_INFO );
 			// Get the feed items from the source
 			$items = wprss_get_feed_items( $feed_url, $feed_ID );
+
 			// If got NULL, convert to an empty array
 			if ( $items === NULL ) {
 				$items = array();
 				wprss_log( 'Items were NULL. Using empty array', null, WPRSS_LOG_LEVEL_WARNING );
 			}
+
+            // See `wprss_item_comparators` filter
+            wprss_sort_items($items);
 
 			// If using a limit ...
 			if ( $feed_limit === NULL ) {
@@ -144,6 +150,11 @@
 			}
 
 			$items_to_insert = $new_items;
+            $per_import = wprss_get_general_setting('limit_feed_items_per_import');
+            if (!empty($per_import)) {
+                wprss_log_obj( 'Per-import limit', $per_import, null, WPRSS_LOG_LEVEL_SYSTEM );
+                $items_to_insert = array_slice( $items_to_insert, 0, $per_import );
+            }
 
 			// If using a limit - delete any excess items to make room for the new items
 			if ( $feed_limit !== NULL ) {
@@ -231,7 +242,6 @@
 		}
 	}
 
-
 	/**
 	 * A clone of the function 'fetch_feed' in wp-includes/feed.php [line #529]
 	 *
@@ -239,63 +249,59 @@
 	 *
 	 * @since 3.5
 	 */
-	function wprss_fetch_feed( $url, $source = NULL, $param_force_feed = FALSE ) {
+	function wprss_fetch_feed($url, $source = null, $param_force_feed = false)
+    {
+        // Trim the URL
+        $url = trim($url);
 
-		// Trim the URL
-		$url = trim( $url );
+        // Initialize the Feed
+        $feed = new SimplePie();
+        $feed->set_feed_url($url);
+        $feed->set_autodiscovery_level(SIMPLEPIE_LOCATOR_ALL);
 
-		// Initialize the Feed
-		$feed = new SimplePie();
-		// Obselete method calls ?
-		//$feed->set_cache_class( 'WP_Feed_Cache' );
-		//$feed->set_file_class( 'WP_SimplePie_File' );
-		$feed->set_feed_url( $url );
-		$feed->set_autodiscovery_level( SIMPLEPIE_LOCATOR_ALL );
+        // If a feed source was passed
+        if ($source !== null || $param_force_feed) {
+            // Get the force feed option for the feed source
+            $force_feed = get_post_meta($source, 'wprss_force_feed', null);
+            // If turned on, force the feed
+            if ($force_feed == 'true' || $param_force_feed) {
+                $feed->force_feed(null);
+            }
+        }
 
-		// If a feed source was passed
-		if ( $source !== NULL || $param_force_feed ) {
-			// Get the force feed option for the feed source
-			$force_feed = get_post_meta( $source, 'wprss_force_feed', TRUE );
-			// If turned on, force the feed
-			if ( $force_feed == 'true' || $param_force_feed ) {
-				$feed->force_feed( TRUE );
-			}
-		}
+        // Set timeout limit
+        $fetch_time_limit = wprss_get_feed_fetch_time_limit();
+        $feed->set_timeout($fetch_time_limit);
 
-		// Set timeout limit
-		$fetch_time_limit = wprss_get_feed_fetch_time_limit();
-		$feed->set_timeout( $fetch_time_limit );
+        $feed->enable_cache(false);
 
-		//$feed->set_cache_duration( apply_filters( 'wp_feed_cache_transient_lifetime', 12 * HOUR_IN_SECONDS, $url ) );
-		$feed->enable_cache( FALSE );
+        // Reference array action hook, for the feed object and the URL
+        do_action_ref_array('wp_feed_options', array(&$feed, $url));
 
-		// Reference array action hook, for the feed object and the URL
-		do_action_ref_array( 'wp_feed_options', array( &$feed, $url ) );
+        // Prepare the tags to strip from the feed
+        $tags_to_strip = apply_filters('wprss_feed_tags_to_strip', $feed->strip_htmltags, $source);
+        // Strip them
+        $feed->strip_htmltags($tags_to_strip);
 
-		// Prepare the tags to strip from the feed
-		$tags_to_strip = apply_filters( 'wprss_feed_tags_to_strip', $feed->strip_htmltags, $source );
-		// Strip them
-		$feed->strip_htmltags( $tags_to_strip );
+        do_action('wprss_fetch_feed_before', $feed, $source);
 
-		do_action( 'wprss_fetch_feed_before', $feed );
+        // Fetch the feed
+        $feed->init();
+        $feed->handle_content_type();
 
-		// Fetch the feed
-		$feed->init();
-		$feed->handle_content_type();
+        do_action('wprss_fetch_feed_after', $feed);
 
-		do_action( 'wprss_fetch_feed_after', $feed );
-
-		// Convert the feed error into a WP_Error, if applicable
-		if ( $feed->error() ) {
-			if ( $source !== NULL ) {
-				$msg = sprintf( __( 'Failed to fetch the RSS feed. Error: %s', WPRSS_TEXT_DOMAIN ), $feed->error() );
-				update_post_meta( $source, 'wprss_error_last_import', $msg );
-			}
-			return new WP_Error( 'simplepie-error', $feed->error() );
-		}
-		// If no error, return the feed and remove any error meta
-		delete_post_meta( $source, "wprss_error_last_import" );
-		return $feed;
+        // Convert the feed error into a WP_Error, if applicable
+        if ($feed->error()) {
+            if ($source !== null) {
+                $msg = sprintf(__('Failed to fetch the RSS feed. Error: %s', WPRSS_TEXT_DOMAIN), $feed->error());
+                update_post_meta($source, 'wprss_error_last_import', $msg);
+            }
+            return new WP_Error('simplepie-error', $feed->error(), array('feed' => $feed));
+        }
+        // If no error, return the feed and remove any error meta
+        delete_post_meta($source, 'wprss_error_last_import');
+        return $feed;
 	}
 
 
@@ -465,7 +471,10 @@
 		foreach ( $items as $item ) {
 
 			// Normalize the URL
-			$permalink = wprss_normalize_permalink( $item->get_permalink(), $item, $feed_ID );
+                    $permalink = $item->get_permalink(); // Link or enclosure URL
+                    $permalink = htmlspecialchars_decode( $permalink ); // SimplePie encodes HTML special chars
+
+			$permalink = wprss_normalize_permalink( $permalink, $item, $feed_ID );
 			wprss_log_obj( 'Importing item', $permalink, null, WPRSS_LOG_LEVEL_INFO );
 			wprss_log_obj( 'Original permalink', $item->get_permalink(), null, WPRSS_LOG_LEVEL_SYSTEM );
 
@@ -696,3 +705,170 @@
 			}
 		}
 	}
+
+    /**
+     * Validates a feed item.
+     *
+     * @since 4.11.2
+     *
+     * @param \SimplePie_Item|mixed $item The item to validate.
+     *
+     * @return \SimplePie_Item|null The item, if it passes; otherwise, null.
+     */
+    function wprss_item_filter_valid($item)
+    {
+        return $item instanceof \SimplePie_Item
+                ? $item
+                : null;
+    }
+
+    /**
+     * Sorts items according to settings.
+     *
+     * Use the `wprss_item_comparators` filter to change the list of comparators
+     * used to determine the new order of items. See {@see wprss_items_sort_compare_items()}.
+     *
+     * @since 4.11.2
+     *
+     * @param \SimplePie_Item[] $items The items list.
+     * @param \WP_Post $feedSource The feed source, for which to sort, if any.
+     */
+    function wprss_sort_items(&$items, $feedSource = null)
+    {
+        // Callbacks used to compare items
+        $comparators = apply_filters('wprss_item_comparators', array());
+        if (empty($comparators)) {
+            return;
+        }
+
+        try {
+            usort($items, function ($itemA, $itemB) use ($comparators, $feedSource) {
+                return wprss_items_sort_compare_items($itemA, $itemB, $comparators, $feedSource);
+            });
+
+            wprss_log_obj( 'Sorted', NULL, WPRSS_LOG_LEVEL_INFO );
+        } catch (\InvalidArgumentException $e) {
+            wprss_log( 'Error was encountered while sorting items; list remains unsorted', NULL, WPRSS_LOG_LEVEL_WARNING );
+        }
+    }
+
+    /**
+     * Recursively compares two items using a list of comparators.
+     *
+     * If a comparator determines that two items are equal, then the items are
+     * evaluated using the next comparator in list, recursively until one of
+     * the comparators establishes a difference between items, or the list of
+     * comparators is exhausted.
+     *
+     * @since 4.11.2
+     *
+     * @param \SimplePie_Item|mixed $itemA The item being compared;
+     * @param \SimplePie_Item|mixed $itemB The item being compared to;
+     * @param callable[] $comparators A list of functions for item comparison.
+     *
+     * @return int A result usable as a return value for {@see usort()}.
+     *
+     * @throws \InvalidArgumentException If the comparator is not callable.
+     */
+    function wprss_items_sort_compare_items($itemA, $itemB, $comparators, $feedSource = null)
+    {
+        if (empty($comparators)) {
+            return 0;
+        }
+
+        $comparator = array_shift($comparators);
+        if (!is_callable($comparator)) {
+            throw new \InvalidArgumentException('Comparator must be callable');
+        }
+
+        $result = call_user_func_array($comparator, array($itemA, $itemB, $feedSource));
+        if (!$result) {
+            return wprss_items_sort_compare_items($itemA, $itemB, $comparators);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Retrieves a custom field of a feed source, or a general setting if the field doesn't exist.
+     *
+     * @since 4.11.2
+     *
+     * @param string $key The key of the field or setting.
+     * @param \WP_Post|null $feedSource The feed source, if any.
+     * @return type
+     */
+    function wprss_get_source_meta_or_setting($key, $feedSource = null)
+    {
+        $value = null;
+        if ($feedSource instanceof \WP_Post) {
+            $value = $feedSource->{$key};
+        }
+
+        return $value !== null && $value !== false
+                ? $value
+                : wprss_get_general_setting($key);
+    }
+
+    /**
+     * Determines date order of two feed items.
+     *
+     * Which should come first is determined by `feed_items_import_order` setting.
+     *
+     * @since 4.11.2
+     *
+     * @param \SimplePie_Item|mixed $itemA The first item.
+     * @param \SimplePie_Item|mixed $itemB The second item.
+     * @param \WP_Post|null $feedSource The feed source for which the items are being compared, if any.
+     * @return int A comparison result for {@see usort()}.
+     */
+    function wprss_item_comparator_date($itemA, $itemB, $feedSource = null)
+    {
+        $sortOrder = wprss_get_source_meta_or_setting('feed_items_import_order', $feedSource);
+        if (empty($sortOrder)) {
+            return 0;
+        }
+
+        if (!wprss_item_filter_valid($itemA) || !wprss_item_filter_valid($itemB)) {
+            return 0;
+        }
+
+        $aDate = intval($itemA->get_gmdate('U'));
+        $bDate = intval($itemB->get_gmdate('U'));
+
+        switch ($sortOrder) {
+            case 'latest':
+                if ($aDate === $bDate) {
+                    return null;
+                }
+                return $aDate > $bDate ? -1 : 1;
+                break;
+
+            case 'oldest':
+                return $aDate < $bDate ? -1 : 1;
+                break;
+
+            case '':
+            default:
+                return 0;
+                break;
+        }
+    }
+
+    /**
+     * Retrieves default comparators for sorting.
+     *
+     * @since 4.11.2
+     *
+     * @param \WP_Post|null $feedSource The feed source, for which to get comparators, if any.
+     *
+     * @return callable[] The list of comparators.
+     */
+    function wprss_sort_comparators_default($feedSource = null)
+    {
+        $helper = wprss_wp_container()->get('wprss.admin_helper');
+        $defaultArgs = array(2 => $feedSource);
+        return array(
+            $helper->createCommand('wprss_item_comparator_date', $defaultArgs),
+        );
+    }

@@ -1,5 +1,5 @@
 <?php
-
+if( !defined('ABSPATH') ){ exit();}
 function twap_free_network_destroy($networkwide) {
 	global $wpdb;
 
@@ -52,6 +52,9 @@ function twap_free_destroy()
 	delete_option('xyz_twap_premium_version_ads');
 	delete_option('xyz_twap_default_selection_edit');
 	delete_option('xyz_twap_utf_decode_enable');
+	delete_option('twap_installed_date');
+	delete_option('xyz_twap_dnt_shw_notice');
+	delete_option('xyz_twap_tw_char_limit');
 }
 
 register_uninstall_hook(XYZ_TWAP_PLUGIN_FILE,'twap_free_network_destroy');

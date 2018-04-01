@@ -57,12 +57,12 @@ Thumbs.db
 # "plugins" directory
 # "themes" directory
 wp-content/*
-!wp-content/mu-plugins/
-!wp-content/plugins/
+# !wp-content/mu-plugins/
+# wp-content/plugins/
 !wp-content/themes/
 
 # ignore these plugins
-wp-content/plugins/*
+wp-content/plugins/
 
 # ignore specific themes
 wp-content/themes/twentyfourteen/
